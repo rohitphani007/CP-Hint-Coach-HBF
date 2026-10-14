@@ -1,102 +1,147 @@
 # CP Hint Coach
 
-A local, open-source Socratic coding coach for competitive programmers and software engineers practicing algorithmic problem solving.
+A hint coach for competitive programming that runs on your own computer. You paste a problem and whatever you have tried so far, and it gives you four hints that get more revealing one step at a time. The idea is to get you unstuck without handing you the solution.
 
-Instead of spoiling full solutions or leaving you completely stuck, **CP Hint Coach** provides a graduated 4-tier hint ladder that gives just enough guidance to get you unstuck.
+It uses an open-weight model through Ollama, so hint generation does not need a cloud API or an account.
 
----
-
-## The Problem
-
-When practicing on platforms like LeetCode, Codeforces, or CodeChef, developers usually face two extremes when stuck:
-1. **Stay stuck** for hours and lose momentum.
-2. **Read the editorial or paste into ChatGPT**, getting the full solution immediately—which defeats the purpose of practice and hurts retention.
-
-CP Hint Coach solves this with progressive hint revelation.
+Built for the Hacktoberfest Week 2 Dev challenge (theme: Side Hustle).
 
 ---
 
-## The 4-Tier Hint Ladder
+## The problem
 
-1. **Hint 1 — Nudge**: A single focused question prompting you what to think about without mentioning any algorithms or data structures.
-2. **Hint 2 — Key Observation**: The underlying structural or mathematical insight of the problem.
-3. **Hint 3 — Approach**: The strategy and data structures described in plain English (no code).
-4. **Hint 4 — Code Skeleton**: A scaffold/pseudocode in your preferred programming language with key logic left as blanks.
+When you are stuck on a Codeforces, LeetCode or CodeChef problem, there are usually only two options. You stay stuck for an hour, or you open the editorial (or paste the problem into a chatbot) and see the whole solution. The first costs you momentum and the second costs you the practice, because the part where you work out the idea is the part that makes you better.
+
+CP Hint Coach sits in between. It gives you the smallest nudge first and only goes deeper when you ask.
 
 ---
 
-## Why Open-Source AI Matters
+## How it works
 
-This project was built for the **Hacktoberfest Week 2 Dev Challenge ("Side Hustle")**. Here is why open innovation and local models are the core reason this product works:
+1. You paste the problem statement, optionally describe your approach or paste your code, and pick a language.
+2. The app sends this to a local model through Ollama in a single request.
+3. The model returns four hints as JSON.
+4. The app hides all four. You reveal them one at a time, and each button only appears after the previous hint.
 
-### 1. Zero-Cost Unit Economics
-A typical 45-minute practice session involves dozens of micro-interactions ("Is this edge case covered?", "What if I sort?", "Unlock Hint 1", "Unlock Hint 2"). On commercial cloud APIs (like GPT-4o), this burns tokens rapidly, making an affordable subscription model financially unviable. With local open-weight models (`qwen2.5-coder:3b`), inference costs **$0.00**.
+The four levels:
 
-### 2. 100% Offline & Private
-Contest preparation and coding interviews often happen in classrooms, during transit, or offline. CP Hint Coach runs completely on-device via Ollama, requiring zero internet connectivity once the model weights are downloaded.
+| Level | Name | What it gives you |
+|-------|------|-------------------|
+| 1 | Nudge | One question about a property of the problem, with no algorithm or data structure named |
+| 2 | Key observation | The core insight, without saying how to implement it |
+| 3 | Approach | The strategy in plain English, now allowed to name the data structure, with no code |
+| 4 | Code skeleton | Function signatures and loop structure in your chosen language, with the main logic left blank |
 
-### 3. Open Model Specialization
-Rather than using generic closed models that are prone to immediately revealing answers, we utilize `qwen2.5-coder:3b`, an open-weight model specialized in code and algorithmic reasoning, guided by strict JSON-constrained decoding.
+---
+
+## Why an open model
+
+**Many small requests.** A practice session is not one question. You ask, unlock a hint, try something, ask again. Running the model locally means there is no per-request fee, so this kind of heavy back-and-forth costs nothing beyond your own computer's time and power.
+
+**Your code stays on your machine.** After the model is downloaded, hint generation works with no internet connection, and your attempts are not sent to any server. The one exception is the optional Codeforces lookup, which needs the internet and sends only the handle you type.
+
+**You control the behavior.** How the coach behaves lives in `prompts.py`, and the model is one line in `coach.py`. You can change how much each hint reveals, or swap in a different model and compare, without touching anything else.
 
 ---
 
 ## Features
 
-- **Progressive Hint Revelation**: Hints are unlocked sequentially—you only see the next hint when you explicitly choose to go deeper.
-- **Language Support**: Tailor Hint 4's skeleton to Python, C++, Java, JavaScript, Go, Rust, or Kotlin.
-- **Codeforces Integration**: Enter any Codeforces handle to automatically fetch problems you recently submitted with non-accepted verdicts (Wrong Answer, Time Limit Exceeded, etc.).
-- **Minimal, Distraction-Free UI**: Clean interface built with Streamlit.
+- Four-level hint ladder, revealed one level at a time
+- Code skeleton in Python, C++, Java, JavaScript, Go, Rust or Kotlin
+- Optional Codeforces lookup: enter a handle to list problems you recently submitted with a non-accepted verdict (wrong answer, time limit exceeded, memory limit exceeded, runtime error or compilation error)
+- Simple Streamlit interface
 
 ---
 
-## Getting Started
+## Getting started
 
-### Prerequisites
+### What you need
 
-1. **Install Ollama**: Download from [ollama.com](https://ollama.com).
-2. **Pull the Model**:
-   ```bash
+- Python 3.10 or newer
+- [Ollama](https://ollama.com), installed and running
+- A couple of GB of free disk space for the model
+
+### Setup
+
+1. Pull the model:
+
+   ```
    ollama pull qwen2.5-coder:3b
    ```
 
-### Installation
+2. Clone this repository:
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/<your-username>/cp-hint-coach.git
-   cd cp-hint-coach
+   ```
+   git clone https://github.com/rohitphani007/CP-Hint-Coach-HBF.git
+   cd CP-Hint-Coach-HBF
    ```
 
-2. Create and activate a virtual environment:
-   ```bash
+3. Create and activate a virtual environment:
+
+   ```
    python -m venv venv
-   # Windows:
+   ```
+
+   On Windows:
+
+   ```
    venv\Scripts\activate
-   # macOS/Linux:
+   ```
+
+   On macOS or Linux:
+
+   ```
    source venv/bin/activate
    ```
 
-3. Install dependencies:
-   ```bash
+4. Install the dependencies:
+
+   ```
    pip install -r requirements.txt
    ```
 
-4. Run the application:
-   ```bash
+5. Start the app:
+
+   ```
    streamlit run app.py
    ```
 
+It opens in your browser. The first hint request can take a while because the model has to load, and generation on a CPU takes tens of seconds.
+
+### Using a different model
+
+Open `coach.py` and change the `MODEL` line at the top, then pull that model with `ollama pull <name>`. Larger models usually give more reliable hints but are slower.
+
 ---
 
-## Tech Stack
+## Known limitations
 
-- **Inference Engine**: [Ollama](https://ollama.com)
-- **Model**: `qwen2.5-coder:3b` (Open-weight, Apache 2.0)
-- **Frontend / App Framework**: [Streamlit](https://streamlit.io)
-- **Platform Integration**: Codeforces Public REST API
+- **Nothing checks that a hint stays within its level.** The rules (no code before level 4, no algorithm name in level 1) are instructions in the prompt, and a small model sometimes ignores them, most often at level 4. The JSON output format only guarantees the structure of the reply, not what the hints say.
+- **Hints can be wrong.** A 3B model can sound confident and still point the wrong way, especially on harder problems. Treat the hints as suggestions and not as truth.
+- **All four hints are generated at once**, even though you only see them one at a time.
+- **The coach does not judge your approach.** Your attempt is passed to the model as context, but the app does not tell you whether you are on the right track.
+- **The Codeforces lookup only lists problems.** It checks your latest 40 submissions, shows up to 10 different problems, and you still paste the statement yourself.
+
+---
+
+## Tech stack
+
+- Inference: [Ollama](https://ollama.com)
+- Model: `qwen2.5-coder:3b`, an open-weight model. Ollama lists it under the Qwen Research License, so read those terms before using it commercially.
+- Interface: [Streamlit](https://streamlit.io)
+- Codeforces data: the public Codeforces API
+
+## Project files
+
+| File | Purpose |
+|------|---------|
+| `app.py` | Streamlit interface and hint unlocking |
+| `coach.py` | Sends the request to Ollama and parses the reply |
+| `prompts.py` | The system prompt that defines the coach and the four levels |
+| `codeforces.py` | Fetches recent non-accepted submissions for a handle |
 
 ---
 
 ## License
 
-MIT License.
+MIT
